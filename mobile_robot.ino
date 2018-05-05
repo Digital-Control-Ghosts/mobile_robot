@@ -6,6 +6,8 @@
  *
 */
 
+#include <math.h>
+
 
 struct pos{
   int x, y;
@@ -103,7 +105,7 @@ void setup() {
 
 
 void loop() {
-  double theta_error = PI/2 - theta_now(goals[goal_idx], robot);
+  double theta_error = theta_now(goals[goal_idx], robot);
   double w = PID_action(theta_error);
   double v = 0.1;
   double VL = (v-w*L/2)/(R*Cl);
@@ -139,12 +141,9 @@ void loop() {
 
 
 
-// Functions Implementations
 
 double theta_now(pos goal, Robot robot){
-    double theta;
-  
-    return theta;
+    return atan2(goal.y - robot.y, goal.x - robot.x) - robot.theta;
 }
 
 
