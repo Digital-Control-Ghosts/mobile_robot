@@ -1,0 +1,3 @@
+LIBRARY model_simulink_sfun.mexw64
+EXPORTS
+mexFunction

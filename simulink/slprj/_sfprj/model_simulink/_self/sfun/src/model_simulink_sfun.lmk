@@ -1,0 +1,45 @@
+CC     = "C:\Program Files\MATLAB\R2014b\sys\lcc64\lcc64\bin\lcc64.exe"
+LD     = "C:\Program Files\MATLAB\R2014b\sys\lcc64\lcc64\bin\lcclnk64.exe"
+LIBCMD = "C:\Program Files\MATLAB\R2014b\sys\lcc64\lcc64\bin\lcclib64.exe"
+CFLAGS = -dll -noregistrylookup  -c -Zp8 -DLCC_WIN64 -DMATLAB_MEX_FILE -DMX_COMPAT_32 -nodeclspec 
+LDFLAGS = -s -dll -L"C:\Program Files\MATLAB\R2014b\sys\lcc64\lcc64\lib64" -entry LibMain -map sfun.map 
+LIBFLAGS = 
+
+OBJECTS = \
+	"model_simulink_sfun.obj"\
+	"c1_model_simulink.obj"\
+	"c2_model_simulink.obj"\
+	"c3_model_simulink.obj"\
+	"model_simulink_sfun_registry.obj"\
+	"lccstub.obj"\
+	"model_simulink_sfun.def"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\sf_runtime.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libmwblas.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libmx.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libmex.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libmat.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libfixedpoint.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libut.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libmwmathutil.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libemlrt.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libmwsl_log_load_blocks.lib"\
+	"C:\Program Files\MATLAB\R2014b\extern\lib\win64\microsoft\libmwsimulink.lib"\
+	"C:\Program Files\MATLAB\R2014b\lib\win64\libmwipp.lib"\
+
+INCLUDE_PATH= -I"C:\Program Files\MATLAB\R2014b\sys\lcc64\lcc64\include64"  -I"C:\Program Files\MATLAB\R2014b\extern\include"  -I"C:\Program Files\MATLAB\R2014b\simulink\include"  -I"C:\Program Files\MATLAB\R2014b\stateflow\c\mex\include"  -I"C:\Program Files\MATLAB\R2014b\rtw\c\src"  -I"D:\GitHub\mobile_robot\simulink\slprj\_sfprj\model_simulink\_self\sfun\src" 
+ 
+
+model_simulink_sfun.mexw64 : $(MAKEFILE) $(OBJECTS)
+	$(LD) $(LDFLAGS) -o model_simulink_sfun.mexw64 @model_simulink_sfun.lmko
+model_simulink_sfun.obj :	"model_simulink_sfun.c"
+	$(CC) $(CFLAGS) $(INCLUDE_PATH) "model_simulink_sfun.c"
+c1_model_simulink.obj :	"c1_model_simulink.c"
+	$(CC) $(CFLAGS) $(INCLUDE_PATH) "c1_model_simulink.c"
+c2_model_simulink.obj :	"c2_model_simulink.c"
+	$(CC) $(CFLAGS) $(INCLUDE_PATH) "c2_model_simulink.c"
+c3_model_simulink.obj :	"c3_model_simulink.c"
+	$(CC) $(CFLAGS) $(INCLUDE_PATH) "c3_model_simulink.c"
+model_simulink_sfun_registry.obj :	"model_simulink_sfun_registry.c"
+	$(CC) $(CFLAGS) $(INCLUDE_PATH) "model_simulink_sfun_registry.c"
+lccstub.obj :	"C:\Program Files\MATLAB\R2014b\sys\lcc64\lcc64\mex\lccstub.c"
+	$(CC) $(CFLAGS) $(INCLUDE_PATH) "C:\Program Files\MATLAB\R2014b\sys\lcc64\lcc64\mex\lccstub.c"
