@@ -43,7 +43,6 @@ struct Robot{
 #define Cl 1
 #define PULSES_PER_REV 12
 
-#define TOLERANCE 0.5
 
 #define Kp 1
 #define Ki 0
@@ -52,10 +51,28 @@ double integrator, lastError;
 double PulseCountR, PulseCountL;
 
 #define N_GOALS 5
+#define TOLERANCE 0.5
 pos goals[N_GOALS] = { pos(1,1), pos(1,2), pos(2,2), pos(3,2), pos(3,3) };
 int goal_idx;
 
 Robot robot;
+
+
+
+
+
+//Function prototyping
+bool checkGoal(pos goal, Robot robot);  //check if the robot reaches the goal ?
+double theta_now(pos goal, Robot robot);  //Theta of the goal in respect of Robot coordinates 
+double PID_action(double error);  //PID controller: take the angle error and return omega 
+void applyVoltage(double VR, double VL);  //apply voltage to left and right motor - handel the direction of motor 
+void EncoderRClicks();  //
+void EncoderLClicks();  //
+
+
+
+
+
 void setup() {
   Serial.begin(9600);
 
@@ -72,20 +89,15 @@ void setup() {
   pinMode(EncoderL, INPUT);
   digitalWrite(EncoderR, HIGH);
   digitalWrite(EncoderL, HIGH);
-  attachInterrupt(digitalPinToInterrupt(Encoder1), EncoderRClicks, RISING);
-  attachInterrupt(digitalPinToInterrupt(Encoder1), EncoderLClicks, RISING);
+  attachInterrupt(digitalPinToInterrupt(EncoderR), EncoderRClicks, RISING);
+  attachInterrupt(digitalPinToInterrupt(EncoderL), EncoderLClicks, RISING);
 }
 
 
 
 
-//Function prototyping
-bool checkGoal(pos goal, Robot robot);  //check if the robot reaches the goal ?
-double theta_now(pos goal, Robot robot);  //Theta of the goal in respect of Robot coordinates 
-double PID_action(double error);  //PID controller: take the angle error and return omega 
-void applyVoltage(double VR, double VL);  //apply voltage to left and right motor - handel the direction of motor 
-void EncoderRClicks();  //
-void EncoderLClicks();  //
+
+
 
 
 
