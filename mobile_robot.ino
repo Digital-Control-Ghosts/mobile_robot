@@ -1,4 +1,11 @@
-// CONTROL GHOSTS ..
+/* 
+ * .. CONTROL GHOSTS ..  
+ * 
+ *
+ *
+ *
+*/
+
 
 struct pos{
   int x, y;
@@ -23,6 +30,8 @@ struct Robot{
 #define M1_dir2 0
 #define M2_dir1 0
 #define M2_dir2 0
+#define EncoderR 0
+#define EncoderL 0
 
 #define MAX_SAT 5
 
@@ -49,12 +58,37 @@ int goal_idx;
 Robot robot;
 void setup() {
   Serial.begin(9600);
+
+  //Motor and H bridge pins
+  pinMode(MOTOR1_PWM, OUTPUT);
+  pinMode(MOTOR2_PWM, OUTPUT);
+  pinMode(M1_dir1, OUTPUT);
+  pinMode(M1_dir2, OUTPUT);
+  pinMode(M2_dir1, OUTPUT);
+  pinMode(M2_dir2, OUTPUT);
+  
+  //intialize encoders' pin and attach the interupt
+  pinMode(EncoderR, INPUT);
+  pinMode(EncoderL, INPUT);
+  digitalWrite(EncoderR, HIGH);
+  digitalWrite(EncoderL, HIGH);
+  attachInterrupt(digitalPinToInterrupt(Encoder1), EncoderRClicks, RISING);
+  attachInterrupt(digitalPinToInterrupt(Encoder1), EncoderLClicks, RISING);
 }
 
-bool checkGoal(pos goal, Robot robot);
-double theta_now(pos goal, Robot robot);
-double PID_action(double error);
-void applyVoltage(double VR, double VL);
+
+
+
+//Function prototyping
+bool checkGoal(pos goal, Robot robot);  //check if the robot reaches the goal ?
+double theta_now(pos goal, Robot robot);  //Theta of the goal in respect of Robot coordinates 
+double PID_action(double error);  //PID controller: take the angle error and return omega 
+void applyVoltage(double VR, double VL);  //apply voltage to left and right motor - handel the direction of motor 
+void EncoderRClicks();  //
+void EncoderLClicks();  //
+
+
+
 
 void loop() {
   double theta_error = PI/2 - theta_now(goals[goal_idx], robot);
@@ -84,6 +118,15 @@ void loop() {
 }
 
 
+
+
+
+
+
+
+
+
+
 // Functions Implementations
 
 double theta_now(pos goal, Robot robot){
@@ -91,6 +134,8 @@ double theta_now(pos goal, Robot robot){
   
     return theta;
 }
+
+
 
 double PID_action(double error){
   double u, derr;
@@ -102,6 +147,8 @@ double PID_action(double error){
 
   return u;
 }
+
+
 
 void applyVoltage(double VR, double VL){
   analogWrite(MOTOR1_PWM, map(abs(VR), 0, MAX_SAT, 0, 255));
@@ -123,7 +170,20 @@ void applyVoltage(double VR, double VL){
   }
 }
 
+
+
 bool checkGoal(pos goal, Robot robot){
     return ((abs(robot.x - goal.x) <= TOLERANCE) && (abs(robot.y - goal.y) <= TOLERANCE));
+}
+
+
+
+
+void EncoderRClicks(){
+  PulseCountR++;
+  
+}
+void EncoderLClicks(){
+  PulseCountL++;
 }
 
