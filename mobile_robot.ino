@@ -3,14 +3,14 @@
    Includes
 */
 #include <math.h>
-
+#define SC 0.66
 
 // data types to store goals as x,y point
 struct pos {
-  int x, y;
-  pos(int a, int b) {
-    x = a;
-    y = b;
+  double x, y;
+  pos(double a, double b) {
+    x = a * SC;
+    y = b * SC;
   }
 };
 
@@ -45,23 +45,27 @@ struct Robot {
 #define L 0.115 //distance between 2 wheels
 #define Cr 2.55 //Rigth_motor_speed = 2.55 * voltage
 #define Cl 2.25 //Left_motor_speed  = 2.25 * voltage
-#define PULSES_PER_REV_R 55 
-#define PULSES_PER_REV_L 30
+#define PULSES_PER_REV_R 55
+#define PULSES_PER_REV_L 33.5
 
 
 #define Kp 10
 #define Ki 0
 #define Kd 0
 double integrator, lastError;
-double PulseCountR, PulseCountL;
+volatile double PulseCountR, PulseCountL;
 int DirL = 1, DirR = 1; // used to know the rotation direction (clockwise or anti-clockwise)
 
 
-#define N_GOALS 3
+
 //range of tolerance for reaching the goal.
 #define TOLERANCE 0.05 
-//pos goals[N_GOALS] = { pos(1, 1), pos(1, 2), pos(2, 2), pos(3, 2), pos(3, 3) };
-pos goals[N_GOALS] = { pos(1, 1), pos(1, 0), pos(0, 0)};
+#define N_GOALS 2
+pos goals[N_GOALS] = { pos(1, 0), pos(1, 1) }; 
+
+//#define N_GOALS 10
+//pos goals[N_GOALS] = {pos(1,0), pos(2,0), pos(3,0)};
+//pos goals[N_GOALS] = {pos(1,0),pos(2,1),pos(3,2),pos(4,3),pos(4,4),pos(3,5),pos(2,5),pos(1,4),pos(1,3),pos(0,0)};
 int goal_idx; //point to the current goal
 
 
@@ -108,17 +112,8 @@ void setup() {
 
 
 void loop() {
-  double theta_error = theta_now(goals[goal_idx], robot);
-  double w = PID_action(theta_error);
-  double v = 0.4;
-  double VL = (v - w * L / 2) / (R * Cl);
-  double VR = (v + w * L / 2) / (R * Cr);
-  if (VL > MAX_SAT_L) VL = MAX_SAT_L;
-  else if (VL < -MAX_SAT_L) VL = -MAX_SAT_L;
-  if (VR > MAX_SAT_R) VR = MAX_SAT_R;
-  else if (VR < -MAX_SAT_R) VR = -MAX_SAT_R;
-  applyVoltage(VR, VL);
-
+  double theta_error, w, v, VL, VR;
+  
   double DR = 2 * PI * R * (DirR * PulseCountR / PULSES_PER_REV_R); //DirR equalls to 1 or -1 depend on the rotation direction of the motor
   double DL = 2 * PI * R * (DirL * PulseCountL / PULSES_PER_REV_L);
   double DC = (DR + DL) / 2;
@@ -128,25 +123,54 @@ void loop() {
   robot.y = robot.y + DC * sin(robot.theta);
   robot.theta = robot.theta + (DR - DL) / L;
 
-  goal_idx += checkGoal(goals[goal_idx], robot);
-
+  
+  if(  checkGoal(goals[goal_idx], robot) ) {
+      goal_idx ++;
+      analogWrite(MOTORR_PWM, 0);
+      analogWrite(MOTORL_PWM, 0);
+      delay(1000);
+      
+  }
+  
   if (goal_idx == N_GOALS) {
     analogWrite(MOTORR_PWM, 0);
     analogWrite(MOTORL_PWM, 0);
     while (1) {}
   }
 
-  Serial.print("VL: ");
-  Serial.println(VL);
-  Serial.print("VR: ");
-  Serial.println(VR);
+  //Serial.print("VL: ");
+  //Serial.println(VL);
+  //Serial.print("VR: ");
+  //Serial.println(VR);
 
   Serial.print("X: ");
-  Serial.println(robot.x);
+  Serial.println(robot.x/SC);
   Serial.print("Y: ");
-  Serial.println(robot.y);
-  Serial.print("theta: ");
-  Serial.println(robot.theta);
+  Serial.println(robot.y/SC);
+
+  Serial.print("DR: ");
+  Serial.println(DR);
+  Serial.print("DL: ");
+  Serial.println(DL);
+  
+  Serial.print("theta robot: ");
+  Serial.println(robot.theta*180/PI);
+  Serial.print("theta error: ");
+  Serial.println(theta_error*180/PI);
+
+
+  
+  theta_error = theta_now(goals[goal_idx], robot);
+  w = PID_action(theta_error);
+  v = 0.6;
+  VL = (v - w * L / 2) / (R * Cl);
+  VR = (v + w * L / 2) / (R * Cr);
+  if (VL > MAX_SAT_L) VL = MAX_SAT_L;
+  else if (VL < -MAX_SAT_L) VL = -MAX_SAT_L;
+  if (VR > MAX_SAT_R) VR = MAX_SAT_R;
+  else if (VR < -MAX_SAT_R) VR = -MAX_SAT_R;
+  applyVoltage(VR, VL);
+
 
   delay(Ts);
 }
