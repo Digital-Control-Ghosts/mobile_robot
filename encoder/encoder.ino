@@ -8,7 +8,7 @@
 #define IN4 7
 #define ENB 10
 
-#define T 2000
+#define T 1000
 #define PULSES_PER_TURN_L 30
 #define PULSES_PER_TURN_R 55
 
@@ -41,7 +41,7 @@ void setup(){
 }
 
 void loop() {
-
+/*
   double RPM_R = (PulseCountR * (60000.f / T)) / (PULSES_PER_TURN_R);
   double RPM_L = (PulseCountL * (60000.f / T)) / (PULSES_PER_TURN_L);
   PulseCountR = PulseCountL = 0;
@@ -72,6 +72,10 @@ void loop() {
   Serial.println(RPM_L);Serial.println(VL);
   Serial.print("Right: ");
   Serial.println(RPM_R);Serial.println(VR);
+  */
+
+  
+
   
   delay(T);
 }
@@ -80,9 +84,13 @@ void loop() {
 
 void EncoderRClicks(){
   PulseCountR++;
+  Serial.print("Right: ");
+  Serial.println(PulseCountR);
   
 }
 void EncoderLClicks(){
   PulseCountL++;
+    Serial.print("Left: ");
+  Serial.println(PulseCountL);
 }
 

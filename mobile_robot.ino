@@ -4,23 +4,8 @@
 */
 #include <math.h>
 #define SC 0.66
+//#define SC 1
 
-// data types to store goals as x,y point
-struct pos {
-  double x, y;
-  pos(double a, double b) {
-    x = a * SC;
-    y = b * SC;
-  }
-};
-
-// Robot location and direction
-struct Robot {
-  double x, y, theta;
-  Robot() {
-    x = y = theta = 0;
-  }
-};
 
 
 //Define pins
@@ -45,13 +30,34 @@ struct Robot {
 #define L 0.115 //distance between 2 wheels
 #define Cr 2.55 //Rigth_motor_speed = 2.55 * voltage
 #define Cl 2.25 //Left_motor_speed  = 2.25 * voltage
+
 #define PULSES_PER_REV_R 55
 #define PULSES_PER_REV_L 33.5
-
 
 #define Kp 10
 #define Ki 0
 #define Kd 0
+
+
+// data types to store goals as x,y point
+struct pos {
+  double x, y;
+  pos(double a, double b) {
+    x = a * SC;
+    y = b * SC;
+  }
+};
+
+// Robot location and direction
+struct Robot {
+  double x, y, theta;
+  Robot() {
+    x = y = theta = 0;
+  }
+};
+
+
+
 double integrator, lastError;
 volatile double PulseCountR, PulseCountL;
 int DirL = 1, DirR = 1; // used to know the rotation direction (clockwise or anti-clockwise)
@@ -60,8 +66,8 @@ int DirL = 1, DirR = 1; // used to know the rotation direction (clockwise or ant
 
 //range of tolerance for reaching the goal.
 #define TOLERANCE 0.05 
-#define N_GOALS 2
-pos goals[N_GOALS] = { pos(1, 0), pos(1, 1) }; 
+#define N_GOALS 1
+pos goals[N_GOALS] = { pos(1, 0) }; 
 
 //#define N_GOALS 10
 //pos goals[N_GOALS] = {pos(1,0), pos(2,0), pos(3,0)};
@@ -74,17 +80,13 @@ Robot robot;
 
 
 
-
-
 //Function prototyping
 bool checkGoal(pos goal, Robot robot);  //check if the robot reaches the goal ?
 double theta_now(pos goal, Robot robot);  //Theta of the goal in respect of Robot coordinates
 double PID_action(double error);  //PID controller: take the angle error and return omega
 void applyVoltage(double VR, double VL);  //apply voltage to left and right motor - handel the direction of motor
-void EncoderRClicks();  //
-void EncoderLClicks();  //
-
-
+void EncoderRClicks();  
+void EncoderLClicks(); 
 
 
 
@@ -114,8 +116,8 @@ void setup() {
 void loop() {
   double theta_error, w, v, VL, VR;
   
-  double DR = 2 * PI * R * (DirR * PulseCountR / PULSES_PER_REV_R); //DirR equalls to 1 or -1 depend on the rotation direction of the motor
-  double DL = 2 * PI * R * (DirL * PulseCountL / PULSES_PER_REV_L);
+  double DR = 2 * PI * R * (PulseCountR / PULSES_PER_REV_R); //DirR equalls to 1 or -1 depend on the rotation direction of the motor
+  double DL = 2 * PI * R * (PulseCountL / PULSES_PER_REV_L);
   double DC = (DR + DL) / 2;
   PulseCountR = PulseCountL = 0;
 
@@ -143,6 +145,9 @@ void loop() {
   //Serial.print("VR: ");
   //Serial.println(VR);
 
+  
+  theta_error = theta_now(goals[goal_idx], robot);
+  
   Serial.print("X: ");
   Serial.println(robot.x/SC);
   Serial.print("Y: ");
@@ -158,19 +163,19 @@ void loop() {
   Serial.print("theta error: ");
   Serial.println(theta_error*180/PI);
 
-
   
-  theta_error = theta_now(goals[goal_idx], robot);
   w = PID_action(theta_error);
-  v = 0.6;
+  v = 0.5;
   VL = (v - w * L / 2) / (R * Cl);
   VR = (v + w * L / 2) / (R * Cr);
+  
   if (VL > MAX_SAT_L) VL = MAX_SAT_L;
   else if (VL < -MAX_SAT_L) VL = -MAX_SAT_L;
+  
   if (VR > MAX_SAT_R) VR = MAX_SAT_R;
   else if (VR < -MAX_SAT_R) VR = -MAX_SAT_R;
+  
   applyVoltage(VR, VL);
-
 
   delay(Ts);
 }
@@ -188,7 +193,7 @@ double theta_now(pos goal, Robot robot) {
 double PID_action(double error) {
   double u, derr;
 
-  integrator += error;
+  integrator = integrator + error * Ts;
   derr      = error - lastError;
   lastError = error;
   u = Kp * error + Ki * integrator + Kd * derr;
@@ -199,8 +204,6 @@ double PID_action(double error) {
 
 
 void applyVoltage(double VR, double VL) {
-  analogWrite(MOTORR_PWM, map(abs(VR), 0, MAX_SAT_R, 0, 220));
-  analogWrite(MOTORL_PWM, map(abs(VL), 0, MAX_SAT_L, 0, 255));
   if (VR > 0) {
     DirR = 1;//note: since we use an one channel encoder, to know the direction of rotation we store the direction.
     digitalWrite(MR_dir1, LOW);
@@ -220,6 +223,9 @@ void applyVoltage(double VR, double VL) {
     digitalWrite(ML_dir1, LOW);
     digitalWrite(ML_dir2, HIGH);
   }
+  
+  analogWrite(MOTORR_PWM, map(abs(VR), 0, MAX_SAT_R, 0, 200));
+  analogWrite(MOTORL_PWM, map(abs(VL), 0, MAX_SAT_L, 0, 255));
 }
 
 
@@ -230,10 +236,16 @@ bool checkGoal(pos goal, Robot robot) {
 
 
 void EncoderRClicks() {
-  PulseCountR++;
+  if(DirR == 1)
+    PulseCountR++;
+  else
+    PulseCountR--;
 
 }
 void EncoderLClicks() {
-  PulseCountL++;
+  if(DirL == 1)
+    PulseCountL++;
+  else
+    PulseCountL--;
 }
 
